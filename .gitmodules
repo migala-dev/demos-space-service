@@ -1,0 +1,6 @@
+[submodule "src/models"]
+	path = src/models
+	url = https://github.com/AlexOrtegaZ/demos-models.git
+[submodule "src/shared"]
+	path = src/shared
+	url = https://github.com/AlexOrtegaZ/demos-shared.git
