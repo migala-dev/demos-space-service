@@ -5,7 +5,7 @@ const { spaceService } = require('../services');
 
 const create = catchAsync(async (req, res) => {
   const cognitoId = req.user.username;
-  const space = await spaceService.createSpace(cognitoId, req.body);
+  const space = await spaceService.create(cognitoId, req.body);
   res.send(space);
 });
 

@@ -7,7 +7,7 @@ const { uploadSpacePictureS3 } = require('../../config/s3');
 
 const router = express.Router();
 
-router.post('/', validate(spaceValidation.creation), spaceController.create);
+router.post('/', auth(), validate(spaceValidation.creation), spaceController.create);
 router.route('/:spaceId/picture').post(auth(), uploadSpacePictureS3.single('file'), spaceController.uploadPicture);
 
 module.exports = router;
