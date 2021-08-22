@@ -3,7 +3,7 @@ const auth = require('../../shared/middlewares/auth');
 const validate = require('../../shared/middlewares/validate');
 const spaceValidation = require('../../validations/space.validation');
 const spaceController = require('../../controllers/space.controller');
-const { uploadSpacePictureS3 } = require('../../config/s3');
+const { uploadSpacePictureS3 } = require('../../middlewares/upload-file.middleware');
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ module.exports = router;
 /**
  * @swagger
  * tags:
- *   name: spaces
+ *   name: Spaces
  *   description: Spaces
  */
 
@@ -23,8 +23,8 @@ module.exports = router;
  * @swagger
  * /spaces:
  *   post:
- *     summary: Login
- *     tags: [Auth]
+ *     summary: Create a space
+ *     tags: [Spaces]
  *     requestBody:
  *       required: true
  *       content:
@@ -32,26 +32,69 @@ module.exports = router;
  *           schema:
  *             type: object
  *             required:
- *               - phoneNumber
+ *               - name
+ *               - description
+ *               - approvalPercentage
+ *               - participationPercentage
  *             properties:
- *               phoneNumber:
+ *               name:
  *                 type: string
+ *               description:
+ *                 type: string
+ *               approvalPercentage:
+ *                 type: number
+ *               participationPercentage:
+ *                 type: number
  *             example:
- *               phoneNumber: +526545384736
+ *               name: Nombre del espacio
+ *               description: Descripcion del espacio
+ *               approvalPercentage: 60
+ *               participationPercentage: 60
  *     responses:
  *       "200":
  *         description: OK
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/LoginResponse'
+ *               $ref: '#/components/schemas/Space'
  *       "401":
- *         description: Invalid phoneNumber
+ *         description: Invalid body information
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *             example:
  *               code: 401
- *               message: Invalid phoneNumber
+ *               message: Invalid body information
+ */
+
+/**
+ * @swagger
+ * /spaces/:spaceId/picture:
+ *   post:
+ *     summary: Upload space picture
+ *     tags: [Spaces]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *        multipart/form-data:
+ *          schema:
+ *              type: string
+ *              format: binary
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Space'
+ *       "401":
+ *         description: File is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               code: 401
+ *               message: File is required
  */

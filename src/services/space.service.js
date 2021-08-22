@@ -6,6 +6,7 @@ const RoleUserSpaceRepository = require('../shared/repositories/role-user-space.
 const UserSpaceRepository = require('../shared/repositories/user-space.reporitory');
 const { Space, RoleUserSpace, UserSpace } = require('../shared/models');
 const { spaceRoleEnum, invitationStatusEnum } = require('../shared/enums');
+const removeS3File = require('../shared/utils/removeS3File');
 
 const createSpace = (newSpace, currentUser) => {
   const space = new Space();
@@ -63,44 +64,32 @@ const create = async (cognitoId, newSpace) => {
   return { space, roleUserSpace, userSpace };
 };
 
-/* const removeOldImage = (imageKey) => {
-  s3.deleteObject(
-    {
-      Bucket: config.aws.bucket,
-      Key: imageKey,
-    },
-    function (err) {
-      if (err) {
-        logger.error(`Can not delete: ${imageKey}`);
-        logger.error(`${err}`);
-      }
-    }
-  );
-}; */
-
 /**
  * Upload an avatar image
  * @param {String} cognitoId
  * @param {File} file
  * @returns {Promise<String>}
  */
-const uploadImage = async () => {
-  /*  const user = await getUserByCognitoId(cognitoId);
-  if (!user) {
+const uploadPicture = async (cognitoId, spaceId, file) => {
+  const currentUser = await UserRepository.findOneByCognitoId(cognitoId);
+  if (!currentUser) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
-  const oldImageKey = user.profilePictureKey;
-  const profilePictureKey = file.key;
-  Object.assign(user, { profilePictureKey });
-  const userToUpdate = new User();
-  userToUpdate.profilePictureKey = profilePictureKey;
-  await UserRepository.save(user.userId, userToUpdate);
-  removeOldImage(oldImageKey);
-  return user; */
-  throw new ApiError(httpStatus.NOT_FOUND, 'Not implemented yet');
+  const space = await SpaceRepository.findOneById(spaceId);
+  if (!space) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Space not found');
+  }
+  const oldImageKey = space.pictureKey;
+  const pictureKey = file.key;
+  Object.assign(space, { pictureKey });
+  const spaceToUpdate = new Space();
+  spaceToUpdate.pictureKey = pictureKey;
+  await SpaceRepository.save(spaceId, spaceToUpdate);
+  removeS3File(oldImageKey);
+  return space;
 };
 
 module.exports = {
   create,
-  uploadImage,
+  uploadPicture,
 };

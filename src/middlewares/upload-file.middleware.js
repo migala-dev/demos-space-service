@@ -1,12 +1,7 @@
-const AWS = require('aws-sdk');
 const multer = require('multer');
 const multers3 = require('multer-s3');
-const config = require('./config');
-
-const s3 = new AWS.S3({
-  accessKeyId: config.aws.accessKeyId,
-  secretAccessKey: config.aws.secretAccessKey,
-});
+const config = require('../config/config');
+const s3 = require('../shared/config/s3');
 
 const uploadSpacePictureS3 = multer({
   storage: multers3({
@@ -21,12 +16,12 @@ const uploadSpacePictureS3 = multer({
       const splitFileName = file.originalname.split('.');
       const extension = splitFileName[splitFileName.length - 1];
       const randomNumber = new Date().getTime().toString().substr(9);
-      cb(null, `spaces/${spaceId}.${randomNumber}.${extension}`);
+      const fileName = `spaces/${spaceId}.${randomNumber}.${extension}`;
+      cb(null, fileName);
     },
   }),
 });
 
 module.exports = {
-  s3,
   uploadSpacePictureS3,
 };
