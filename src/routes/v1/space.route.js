@@ -9,6 +9,7 @@ const router = express.Router();
 
 router.post('/', auth(), validate(spaceValidation.creation), spaceController.create);
 router.route('/:spaceId/picture').post(auth(), uploadSpacePictureS3.single('file'), spaceController.uploadPicture);
+router.route('/:spaceId/invitation').post(auth(), validate(spaceValidation.sendInvitation), spaceController.sendInvitations);
 
 module.exports = router;
 
@@ -97,4 +98,28 @@ module.exports = router;
  *             example:
  *               code: 401
  *               message: File is required
+ */
+
+/**
+ * @swagger
+ * /spaces/:spaceId/invitation:
+ *   post:
+ *     summary: Send Invitations to the space
+ *     tags: [Spaces]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *                  type: object
+ *                  properties:
+ *                      phone:
+ *                          type: string
+ *                      userId:
+ *                          type: string
+ *     responses:
+ *       "200":
+ *         description: OK
  */

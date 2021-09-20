@@ -19,7 +19,18 @@ const uploadPicture = catchAsync(async (req, res) => {
   res.send(space);
 });
 
+const sendInvitations = catchAsync(async (req, res) => {
+  const cognitoId = req.user.username;
+  const { spaceId } = req.params;
+  const { users } = req.body;
+
+  const result = await spaceService.sendInvitations(cognitoId, spaceId, users);
+
+  res.send(result);
+});
+
 module.exports = {
   create,
   uploadPicture,
+  sendInvitations,
 };
