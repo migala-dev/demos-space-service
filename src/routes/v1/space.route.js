@@ -8,8 +8,10 @@ const { uploadSpacePictureS3 } = require('../../middlewares/upload-file.middlewa
 const router = express.Router();
 
 router.post('/', auth(), validate(spaceValidation.creation), spaceController.create);
+router.get('/:spaceId/', auth(), spaceController.getSpaceInfo);
 router.route('/:spaceId/picture').post(auth(), uploadSpacePictureS3.single('file'), spaceController.uploadPicture);
 router.route('/:spaceId/invitation').post(auth(), validate(spaceValidation.sendInvitation), spaceController.sendInvitations);
+
 
 module.exports = router;
 
@@ -115,4 +117,18 @@ module.exports = router;
  *     responses:
  *       "200":
  *         description: OK
+ */
+
+/**
+ * @swagger
+ * /spaces/:spaceId:
+ *   get:
+ *     summary: Get Space Information
+ *     tags: [Spaces]
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         schema:  
+ *          space: 
+ *            $ref: '#/components/schemas/Space'
  */

@@ -103,12 +103,12 @@ const findUser = (phoneNumber) => {
   return UserRepository.findOneByPhoneNumber(phoneNumber);
 };
 
-const createInvitationCache = (userId, invitation) => {
+const createInvitationCache = (userId, spaceId) => {
   const cache = new Cache();
   cache.entityName = 'userSpace';
   cache.eventName = 'invitation';
   cache.userId = userId;
-  cache.data = JSON.stringify(invitation);
+  cache.data = JSON.stringify({ spaceId  });
   return CacheRepository.create(cache);
 };
 
@@ -133,7 +133,7 @@ const creatInvitation = async (userParams, spaceId, createdBy) => {
   const userSpace = await UserSpaceRepository.findByUserIdAndSpaceId(userId, spaceId);
   if (!userSpace) {
     const invitation = await createUserSpace(spaceId, userId, invitationStatusEnum.SENDED, createdBy);
-    await createInvitationCache(userId, invitation);
+    await createInvitationCache(userId, spaceId);
 
     return invitation;
   }
@@ -187,8 +187,54 @@ const sendInvitations = async (cognitoId, spaceId, users) => {
   return invitations;
 };
 
+const markInvitationAsARecibed = async (userSpaceId)  => {
+  const userSpace = new UserSpace();
+  userSpace.invitationStatus = invitationStatusEnum.RECEIVED;
+  return UserSpaceRepository.save(userSpaceId, userSpace);
+};
+
+/**
+ * Upload an avatar image
+ * @param {String} cognitoId
+ * @param {String} spaceId
+ * @returns {Promise<String>}
+ */
+ const getSpaceInfo = async (cognitoId, spaceId) => {
+  const currentUser = await UserRepository.findOneByCognitoId(cognitoId);
+  if (!currentUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const space = await SpaceRepository.findOneById(spaceId);
+  if (!space) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Space not found');
+  }
+
+  const currentUserRoleSpace = await RoleUserSpaceRepository.findByUserIdAndSpaceId(currentUser.userId, spaceId);
+  if (!currentUserRoleSpace) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Role not found');
+  } else if (currentUserRoleSpace.role !== spaceRoleEnum.ADMIN) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User is not admin from this space');
+  }
+
+  const userSpace = await UserSpaceRepository.findByUserIdAndSpaceId(currentUser.userId, spaceId);
+  if (!userSpace) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User is not part of this space');
+  }
+
+  if(userSpace.invitationStatus === invitationStatusEnum.SENDED) {
+    await markInvitationAsARecibed(userSpace.userSpaceId);
+    userSpace.invitationStatus = invitationStatusEnum.RECEIVED;
+  }
+
+  const roleUserSpace = await RoleUserSpaceRepository.findByUserIdAndSpaceId(currentUser.userId, spaceId);
+
+  return { space, roleUserSpace, userSpace };
+};
+
 module.exports = {
   create,
   uploadPicture,
   sendInvitations,
+  getSpaceInfo,
 };
