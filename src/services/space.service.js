@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 const httpStatus = require('http-status');
 const ApiError = require('../shared/utils/ApiError');
 const UserRepository = require('../shared/repositories/user.repository');
@@ -10,6 +9,7 @@ const { Space, RoleUserSpace, UserSpace, User, Cache } = require('../shared/mode
 const { spaceRoleEnum, invitationStatusEnum } = require('../shared/enums');
 const removeS3File = require('../shared/utils/removeS3File');
 const logger = require('../shared/config/logger');
+const cacheService = require('../shared/services/cache.service');
 
 const createSpace = (newSpace, currentUser) => {
   const space = new Space();
@@ -133,7 +133,8 @@ const creatInvitation = async (userParams, spaceId, createdBy) => {
   const userSpace = await UserSpaceRepository.findByUserIdAndSpaceId(userId, spaceId);
   if (!userSpace) {
     const invitation = await createUserSpace(spaceId, userId, invitationStatusEnum.SENDED, createdBy);
-    createInvitationCache(userId, invitation);
+    await createInvitationCache(userId, invitation);
+
     return invitation;
   }
   return userSpace;
@@ -144,6 +145,7 @@ const createUserInviations = async (users, spaceId, createdBy) => {
     users.map(async (user) => {
       try {
         const invitation = await creatInvitation(user, spaceId, createdBy);
+        cacheService.emitUpdateCache(user.userId);
         return invitation;
       } catch (err) {
         logger.error(err);

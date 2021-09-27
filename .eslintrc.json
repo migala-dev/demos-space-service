@@ -23,6 +23,7 @@
     "no-underscore-dangle": "off",
     "consistent-return": "off",
     "jest/expect-expect": "off",
+    "class-methods-use-this": "off",
     "security/detect-object-injection": "off",
     "prettier/prettier": [
       "error",

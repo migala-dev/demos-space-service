@@ -16,6 +16,7 @@ const envVarsSchema = Joi.object()
     PGUSER: Joi.string().required().description('PostgresSQL - User'),
     PGDATABASE: Joi.string().required().description('PostgresSQL - Database'),
     PGPORT: Joi.string().required().description('PostgresSQL - Port'),
+    WEB_SOCKET_URL: Joi.string().required().description('Web Socket - Url'),
   })
   .unknown();
 
@@ -28,6 +29,7 @@ if (error) {
 module.exports = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
+  webSocketUrl: envVars.WEB_SOCKET_URL,
   aws: {
     region: envVars.AWS_REGION,
     userPoolId: envVars.AWS_USER_POOL_ID,
