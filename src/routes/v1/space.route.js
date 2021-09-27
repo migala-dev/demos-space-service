@@ -111,14 +111,7 @@ module.exports = router;
  *       content:
  *         application/json:
  *           schema:
- *             type: array
- *             items:
- *                  type: object
- *                  properties:
- *                      phone:
- *                          type: string
- *                      userId:
- *                          type: string
+ *            $ref: '#/components/schemas/Invitations'
  *     responses:
  *       "200":
  *         description: OK
