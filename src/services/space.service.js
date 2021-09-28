@@ -134,7 +134,7 @@ const creatInvitation = async (userParams, spaceId, createdBy) => {
   if (!userSpace) {
     const invitation = await createUserSpace(spaceId, userId, invitationStatusEnum.SENDED, createdBy);
     await createInvitationCache(userId, spaceId);
-
+    cacheService.emitUpdateCache(userId);
     return invitation;
   }
   return userSpace;
@@ -145,7 +145,6 @@ const createUserInviations = async (users, spaceId, createdBy) => {
     users.map(async (user) => {
       try {
         const invitation = await creatInvitation(user, spaceId, createdBy);
-        cacheService.emitUpdateCache(user.userId);
         return invitation;
       } catch (err) {
         logger.error(err);
@@ -205,21 +204,15 @@ const markInvitationAsARecibed = async (userSpaceId)  => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
-  const space = await SpaceRepository.findOneById(spaceId);
-  if (!space) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Space not found');
-  }
-
-  const currentUserRoleSpace = await RoleUserSpaceRepository.findByUserIdAndSpaceId(currentUser.userId, spaceId);
-  if (!currentUserRoleSpace) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Role not found');
-  } else if (currentUserRoleSpace.role !== spaceRoleEnum.ADMIN) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User is not admin from this space');
-  }
 
   const userSpace = await UserSpaceRepository.findByUserIdAndSpaceId(currentUser.userId, spaceId);
   if (!userSpace) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User is not part of this space');
+  }
+
+  const space = await SpaceRepository.findOneById(spaceId);
+  if (!space) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Space not found');
   }
 
   if(userSpace.invitationStatus === invitationStatusEnum.SENDED) {
