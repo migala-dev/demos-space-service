@@ -108,7 +108,7 @@ const createInvitationCache = (userId, spaceId) => {
   cache.entityName = 'userSpace';
   cache.eventName = 'invitation';
   cache.userId = userId;
-  cache.data = JSON.stringify({ spaceId  });
+  cache.data = JSON.stringify({ spaceId });
   return CacheRepository.create(cache);
 };
 
@@ -157,7 +157,7 @@ const createUserInviations = async (users, spaceId, createdBy) => {
 };
 
 /**
- * Upload an avatar image
+ * Send invitation
  * @param {String} cognitoId
  * @param {String} spaceId
  * @param {Array<{ userId, phone }>} users
@@ -186,24 +186,23 @@ const sendInvitations = async (cognitoId, spaceId, users) => {
   return invitations;
 };
 
-const markInvitationAsARecibed = async (userSpaceId)  => {
+const markInvitationAs = async (userSpaceId, invitationStatus) => {
   const userSpace = new UserSpace();
-  userSpace.invitationStatus = invitationStatusEnum.RECEIVED;
+  userSpace.invitationStatus = invitationStatus;
   return UserSpaceRepository.save(userSpaceId, userSpace);
 };
 
 /**
- * Upload an avatar image
+ * Get space info
  * @param {String} cognitoId
  * @param {String} spaceId
  * @returns {Promise<String>}
  */
- const getSpaceInfo = async (cognitoId, spaceId) => {
+const getSpaceInfo = async (cognitoId, spaceId) => {
   const currentUser = await UserRepository.findOneByCognitoId(cognitoId);
   if (!currentUser) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
-
 
   const userSpace = await UserSpaceRepository.findByUserIdAndSpaceId(currentUser.userId, spaceId);
   if (!userSpace) {
@@ -215,8 +214,8 @@ const markInvitationAsARecibed = async (userSpaceId)  => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Space not found');
   }
 
-  if(userSpace.invitationStatus === invitationStatusEnum.SENDED) {
-    await markInvitationAsARecibed(userSpace.userSpaceId);
+  if (userSpace.invitationStatus === invitationStatusEnum.SENDED) {
+    await markInvitationAs(userSpace.userSpaceId, invitationStatusEnum.RECEIVED);
     userSpace.invitationStatus = invitationStatusEnum.RECEIVED;
   }
 
@@ -225,9 +224,114 @@ const markInvitationAsARecibed = async (userSpaceId)  => {
   return { space, roleUserSpace, userSpace };
 };
 
+const createAcceptInvitationCache = (userId, userSpaceId) => {
+  const cache = new Cache();
+  cache.entityName = 'userSpace';
+  cache.eventName = 'accept-invitation';
+  cache.userId = userId;
+  cache.data = JSON.stringify({ userSpaceId });
+  return CacheRepository.create(cache);
+};
+
+const notifyNewMemeber = (memebrs, userSpaceId) => {
+  return Promise.all(
+    memebrs.map(async (member) => {
+      try {
+        await createAcceptInvitationCache(member.userId, userSpaceId);
+        cacheService.emitUpdateCache(member.userId);
+      } catch (err) {
+        logger.error(err);
+      }
+      return null;
+    })
+  );
+};
+
+/**
+ * Accept Invitation
+ * @param {String} cognitoId
+ * @param {String} spaceId
+ * @returns {Promise<String>}
+ */
+const acceptSpaceInvitation = async (cognitoId, spaceId) => {
+  const currentUser = await UserRepository.findOneByCognitoId(cognitoId);
+  if (!currentUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const userSpace = await UserSpaceRepository.findByUserIdAndSpaceId(currentUser.userId, spaceId);
+  if (!userSpace) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User is not part of this space.');
+  }
+  if (userSpace.invitationStatus === invitationStatusEnum.CANCELED) {
+    return userSpace;
+  }
+
+  const space = await SpaceRepository.findOneById(spaceId);
+  if (!space) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Space not found.');
+  }
+
+  let members = await UserSpaceRepository.findMembers(spaceId);
+  members = members.filter((m) => m.userId !== currentUser.userId);
+
+  const users = await Promise.all(
+    members.map(async (userSpace) => {
+      try {
+        const userToSearch = new User();
+        userToSearch.userId = userSpace.userId;
+        const user = await UserRepository.findOne(userToSearch);
+        return user;
+      } catch (err) {
+        logger.error(err);
+        return null;
+      }
+    })
+  );
+
+  if (userSpace.invitationStatus === invitationStatusEnum.RECEIVED) {
+    await markInvitationAs(userSpace.userSpaceId, invitationStatusEnum.ACCEPTED);
+    userSpace.invitationStatus = invitationStatusEnum.ACCEPTED;
+    notifyNewMemeber(members, userSpace.userSpaceId);
+  }
+
+  const userRoles = await RoleUserSpaceRepository.findBySpaceId(spaceId);
+
+  return { space, userSpace, members, users, userRoles };
+};
+
+
+/**
+ * Reject Invitation
+ * @param {String} cognitoId
+ * @param {String} spaceId
+ * @returns {Promise<String>}
+ */
+ const rejectSpaceInvitation = async (cognitoId, spaceId) => {
+  const currentUser = await UserRepository.findOneByCognitoId(cognitoId);
+  if (!currentUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const userSpace = await UserSpaceRepository.findByUserIdAndSpaceId(currentUser.userId, spaceId);
+  if (!userSpace) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User is not part of this space.');
+  }
+
+  if (userSpace.invitationStatus === invitationStatusEnum.RECEIVED) {
+    await markInvitationAs(userSpace.userSpaceId, invitationStatusEnum.REJECTED);
+    userSpace.invitationStatus = invitationStatusEnum.REJECTED;
+  }
+
+  return { userSpace };
+};
+
+
 module.exports = {
   create,
   uploadPicture,
   sendInvitations,
   getSpaceInfo,
+  acceptSpaceInvitation,
+  rejectSpaceInvitation,
 };
