@@ -99,7 +99,7 @@ const uploadPicture = async (cognitoId, spaceId, file) => {
   if (!currentUser) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
-  const space = await SpaceRepository.findOneById(spaceId);
+  const space = await SpaceRepository.findById(spaceId);
   if (!space) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Space not found');
   }
@@ -190,7 +190,7 @@ const sendInvitations = async (cognitoId, spaceId, users) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
-  const space = await SpaceRepository.findOneById(spaceId);
+  const space = await SpaceRepository.findById(spaceId);
   if (!space) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Space not found');
   }
@@ -230,7 +230,7 @@ const getSpaceInfo = async (cognitoId, spaceId) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User is not part of this space');
   }
 
-  const space = await SpaceRepository.findOneById(spaceId);
+  const space = await SpaceRepository.findById(spaceId);
   if (!space) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Space not found');
   }
@@ -288,18 +288,18 @@ const acceptSpaceInvitation = async (cognitoId, spaceId) => {
     return userSpace;
   }
 
-  const space = await SpaceRepository.findOneById(spaceId);
+  const space = await SpaceRepository.findById(spaceId);
   if (!space) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Space not found.');
   }
 
-  let members = await UserSpaceRepository.findBySpaceId(spaceId);
+  let members = await UserSpaceRepository.findAllBySpaceId(spaceId);
   members = members.filter((m) => m.userId !== currentUser.userId);
 
   const users = await Promise.all(
     members.map(async (userSpace) => {
       try {
-        const user = await UserRepository.findOneById(userSpace.userId);
+        const user = await UserRepository.findById(userSpace.userId);
         return user;
       } catch (err) {
         logger.error(err);
