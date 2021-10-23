@@ -9,6 +9,12 @@ const create = catchAsync(async (req, res) => {
   res.send(space);
 });
 
+const getAllUserSpaces = catchAsync(async (req, res) => {
+  const cognitoId = req.user.username;
+  const response = await spaceService.getAllUserSpaces(cognitoId);
+  res.send(response);
+});
+
 const uploadPicture = catchAsync(async (req, res) => {
   if (!req.file) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Space image required');
@@ -59,6 +65,7 @@ const rejectInvitation = catchAsync(async (req, res) => {
 
 module.exports = {
   create,
+  getAllUserSpaces,
   uploadPicture,
   sendInvitations,
   getSpaceInfo,

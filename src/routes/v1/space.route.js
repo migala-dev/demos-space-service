@@ -8,6 +8,7 @@ const { uploadSpacePictureS3 } = require('../../middlewares/upload-file.middlewa
 const router = express.Router();
 
 router.post('/', auth(), validate(spaceValidation.creation), spaceController.create);
+router.get('/', auth(), spaceController.getAllUserSpaces);
 router.get('/:spaceId/', auth(), spaceController.getSpaceInfo);
 router.route('/:spaceId/picture').post(auth(), uploadSpacePictureS3.single('file'), spaceController.uploadPicture);
 router.route('/:spaceId/invitation').post(auth(), validate(spaceValidation.sendInvitation), spaceController.sendInvitations);

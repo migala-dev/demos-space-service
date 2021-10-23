@@ -68,6 +68,27 @@ const create = async (cognitoId, newSpace) => {
 };
 
 /**
+ * Get all user spaces
+ * @param {ObjectId} cognitoId
+ * @returns {Promise<User>}
+ */
+ const getAllUserSpaces = async (cognitoId) => {
+  const currentUser = await UserRepository.findOneByCognitoId(cognitoId);
+
+  if (!currentUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const spaces = await SpaceRepository.findAllByUserId(currentUser.userId);
+  const spaceIds = spaces.map(s => s.spaceId);
+  const userSpaces = await UserSpaceRepository.findAllBySpaceIds(spaceIds);
+  const userIds = userSpaces.map(u => u.userId);
+  const users = await UserRepository.findAllByIds(userIds);
+  const roleUserSpaces = await RoleUserSpaceRepository.findAllBySpaceIds(spaceIds);
+  
+  return { spaces, userSpaces, roleUserSpaces, users };
+};
+/**
  * Upload an avatar image
  * @param {String} cognitoId
  * @param {File} file
@@ -272,15 +293,13 @@ const acceptSpaceInvitation = async (cognitoId, spaceId) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Space not found.');
   }
 
-  let members = await UserSpaceRepository.findMembers(spaceId);
+  let members = await UserSpaceRepository.findBySpaceId(spaceId);
   members = members.filter((m) => m.userId !== currentUser.userId);
 
   const users = await Promise.all(
     members.map(async (userSpace) => {
       try {
-        const userToSearch = new User();
-        userToSearch.userId = userSpace.userId;
-        const user = await UserRepository.findOne(userToSearch);
+        const user = await UserRepository.findOneById(userSpace.userId);
         return user;
       } catch (err) {
         logger.error(err);
@@ -329,6 +348,7 @@ const acceptSpaceInvitation = async (cognitoId, spaceId) => {
 
 module.exports = {
   create,
+  getAllUserSpaces,
   uploadPicture,
   sendInvitations,
   getSpaceInfo,
