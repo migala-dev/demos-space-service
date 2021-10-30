@@ -133,7 +133,7 @@ const createInvitationCache = (userId, spaceId) => {
   return CacheRepository.create(cache);
 };
 
-const creatInvitation = async (userParams, spaceId, createdBy) => {
+const createInvitation = async (userParams, spaceId, createdBy) => {
   let { userId } = userParams;
   const { phoneNumber } = userParams;
 
@@ -165,7 +165,7 @@ const createUserInviations = async (users, spaceId, createdBy) => {
   const invitations = await Promise.all(
     users.map(async (user) => {
       try {
-        const invitation = await creatInvitation(user, spaceId, createdBy);
+        const invitation = await createInvitation(user, spaceId, createdBy);
         return invitation;
       } catch (err) {
         logger.error(err);

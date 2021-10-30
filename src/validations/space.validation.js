@@ -14,8 +14,8 @@ const sendInvitation = {
     users: Joi.array()
       .items(
         Joi.object().keys({
-          phoneNumber: Joi.string(),
-          userId: Joi.string(),
+          phoneNumber: Joi.string().allow(null, ''),
+          userId: Joi.string().allow(null, ''),
         })
       )
       .min(1)
