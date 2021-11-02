@@ -196,9 +196,7 @@ const sendInvitations = async (cognitoId, spaceId, users) => {
   }
 
   const userRoleSpace = await RoleUserSpaceRepository.findByUserIdAndSpaceId(currentUser.userId, spaceId);
-  if (!userRoleSpace) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Role not found');
-  } else if (userRoleSpace.role !== spaceRoleEnum.ADMIN) {
+  if (!userRoleSpace || userRoleSpace.role !== spaceRoleEnum.ADMIN) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User is not admin from this space');
   }
 
