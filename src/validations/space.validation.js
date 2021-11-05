@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-const creation = {
+const spaceInfo = {
   body: Joi.object().keys({
     name: Joi.string().required(),
     description: Joi.string().allow(null, ''),
@@ -23,8 +23,7 @@ const sendInvitation = {
   }),
 };
 
-
 module.exports = {
-  creation,
+  spaceInfo,
   sendInvitation,
 };

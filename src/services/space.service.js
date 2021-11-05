@@ -10,6 +10,7 @@ const { spaceRoleEnum, invitationStatusEnum } = require('../shared/enums');
 const removeS3File = require('../shared/utils/removeS3File');
 const logger = require('../shared/config/logger');
 const cacheService = require('../shared/services/cache.service');
+const notificationService = require('./notification.service');
 
 const createSpace = (newSpace, currentUser) => {
   const space = new Space();
@@ -72,7 +73,7 @@ const create = async (cognitoId, newSpace) => {
  * @param {ObjectId} cognitoId
  * @returns {Promise<User>}
  */
- const getAllUserSpaces = async (cognitoId) => {
+const getAllUserSpaces = async (cognitoId) => {
   const currentUser = await UserRepository.findOneByCognitoId(cognitoId);
 
   if (!currentUser) {
@@ -80,14 +81,51 @@ const create = async (cognitoId, newSpace) => {
   }
 
   const spaces = await SpaceRepository.findAllByUserId(currentUser.userId);
-  const spaceIds = spaces.map(s => s.spaceId);
+  const spaceIds = spaces.map((s) => s.spaceId);
   const userSpaces = await UserSpaceRepository.findAllBySpaceIds(spaceIds);
-  const userIds = userSpaces.map(u => u.userId);
+  const userIds = userSpaces.map((u) => u.userId);
   const users = await UserRepository.findAllByIds(userIds);
   const roleUserSpaces = await RoleUserSpaceRepository.findAllBySpaceIds(spaceIds);
-  
+
   return { spaces, userSpaces, roleUserSpaces, users };
 };
+
+const notifyMembersForSpaceUpdate = async (spaceId) => {
+  const members = await UserSpaceRepository.findUsersBySpaceId(spaceId);
+  notificationService.notifySpaceUpdatedEvent(members, spaceId);
+};
+
+/**
+ * Update space info
+ * @param {String} cognitoId
+ * @param {Space} space
+ * @returns {Promise<String>}
+ */
+const updateSpaceInfo = async (cognitoId, spaceId, spaceInfo) => {
+  const currentUser = await UserRepository.findOneByCognitoId(cognitoId);
+  if (!currentUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  const space = await SpaceRepository.findById(spaceId);
+  if (!space) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Space not found');
+  }
+  const { name, description, approvalPercentage, participationPercentage } = spaceInfo;
+
+  await SpaceRepository.updateNameAndDescriptionAndPercentages(
+    spaceId,
+    name,
+    description,
+    approvalPercentage,
+    participationPercentage
+  );
+  const spaceUpdated = await SpaceRepository.findById(spaceId);
+
+  notifyMembersForSpaceUpdate(spaceId);
+
+  return spaceUpdated;
+};
+
 /**
  * Upload an avatar image
  * @param {String} cognitoId
@@ -291,13 +329,13 @@ const acceptSpaceInvitation = async (cognitoId, spaceId) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Space not found.');
   }
 
-  let members = await UserSpaceRepository.findAllBySpaceId(spaceId);
+  let members = await UserSpaceRepository.findMembers(spaceId);
   members = members.filter((m) => m.userId !== currentUser.userId);
 
   const users = await Promise.all(
-    members.map(async (userSpace) => {
+    members.map(async (member) => {
       try {
-        const user = await UserRepository.findById(userSpace.userId);
+        const user = await UserRepository.findById(member.userId);
         return user;
       } catch (err) {
         logger.error(err);
@@ -317,14 +355,13 @@ const acceptSpaceInvitation = async (cognitoId, spaceId) => {
   return { space, userSpace, members, users, userRoles };
 };
 
-
 /**
  * Reject Invitation
  * @param {String} cognitoId
  * @param {String} spaceId
  * @returns {Promise<String>}
  */
- const rejectSpaceInvitation = async (cognitoId, spaceId) => {
+const rejectSpaceInvitation = async (cognitoId, spaceId) => {
   const currentUser = await UserRepository.findOneByCognitoId(cognitoId);
   if (!currentUser) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
@@ -343,7 +380,6 @@ const acceptSpaceInvitation = async (cognitoId, spaceId) => {
   return { userSpace };
 };
 
-
 module.exports = {
   create,
   getAllUserSpaces,
@@ -352,4 +388,5 @@ module.exports = {
   getSpaceInfo,
   acceptSpaceInvitation,
   rejectSpaceInvitation,
+  updateSpaceInfo,
 };

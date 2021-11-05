@@ -25,6 +25,13 @@ const uploadPicture = catchAsync(async (req, res) => {
   res.send(space);
 });
 
+const updateSpaceInfo = catchAsync(async (req, res) => {
+  const cognitoId = req.user.username;
+  const { spaceId } = req.params;
+  const space = await spaceService.updateSpaceInfo(cognitoId, spaceId, req.body);
+  res.send(space);
+});
+
 const sendInvitations = catchAsync(async (req, res) => {
   const cognitoId = req.user.username;
   const { spaceId } = req.params;
@@ -62,13 +69,13 @@ const rejectInvitation = catchAsync(async (req, res) => {
   res.send(result);
 });
 
-
 module.exports = {
   create,
   getAllUserSpaces,
+  updateSpaceInfo,
   uploadPicture,
   sendInvitations,
   getSpaceInfo,
   acceptInvitation,
-  rejectInvitation
+  rejectInvitation,
 };

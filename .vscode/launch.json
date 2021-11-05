@@ -11,9 +11,9 @@
             "cwd": "${workspaceRoot}",
             "runtimeExecutable": "npm",
             "runtimeArgs": [
-                "run-script", "dev"
+                "run", "dev"
             ],
-            "port": 3002
+            "port": 3001
         }
     ]
 }
