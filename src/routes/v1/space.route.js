@@ -12,9 +12,6 @@ router.get('/', auth(), spaceController.getAllUserSpaces);
 router.post('/:spaceId', auth(), validate(spaceValidation.spaceInfo), spaceController.updateSpaceInfo);
 router.get('/:spaceId', auth(), spaceController.getSpaceInfo);
 router.route('/:spaceId/picture').post(auth(), uploadSpacePictureS3.single('file'), spaceController.uploadPicture);
-router.route('/:spaceId/invitation').post(auth(), validate(spaceValidation.sendInvitation), spaceController.sendInvitations);
-router.route('/:spaceId/invitation/accept').post(auth(), spaceController.acceptInvitation);
-router.route('/:spaceId/invitation/reject').post(auth(), spaceController.rejectInvitation);
 
 module.exports = router;
 

@@ -9,21 +9,7 @@ const spaceInfo = {
   }),
 };
 
-const sendInvitation = {
-  body: Joi.object().keys({
-    users: Joi.array()
-      .items(
-        Joi.object().keys({
-          phoneNumber: Joi.string().allow(null, ''),
-          userId: Joi.string().allow(null, ''),
-        })
-      )
-      .min(1)
-      .required(),
-  }),
-};
 
 module.exports = {
   spaceInfo,
-  sendInvitation,
 };

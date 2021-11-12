@@ -1,5 +1,6 @@
 const express = require('express');
 const spaceRoute = require('./space.route');
+const membersRoute = require('./member.route');
 const docsRoute = require('./docs.route');
 const config = require('../../config/config');
 
@@ -9,6 +10,10 @@ const defaultRoutes = [
   {
     path: '/spaces',
     route: spaceRoute,
+  },
+  {
+    path: '/members',
+    route: membersRoute,
   },
 ];
 
