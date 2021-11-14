@@ -1,17 +1,28 @@
 const express = require('express');
 const auth = require('../../shared/middlewares/auth');
+const spaceMember = require('../../shared/middlewares/space-member.middleware');
 const validate = require('../../shared/middlewares/validate');
 const spaceValidation = require('../../validations/space.validation');
 const spaceController = require('../../controllers/space.controller');
 const { uploadSpacePictureS3 } = require('../../middlewares/upload-file.middleware');
+const { spaceRoleEnum } = require('../../shared/enums');
+const spaceRole = require('../../shared/middlewares/space-role.middleware');
 
 const router = express.Router();
 
 router.post('/', auth(), validate(spaceValidation.spaceInfo), spaceController.create);
 router.get('/', auth(), spaceController.getAllUserSpaces);
-router.post('/:spaceId', auth(), validate(spaceValidation.spaceInfo), spaceController.updateSpaceInfo);
-router.get('/:spaceId', auth(), spaceController.getSpaceInfo);
-router.route('/:spaceId/picture').post(auth(), uploadSpacePictureS3.single('file'), spaceController.uploadPicture);
+router.post(
+  '/:spaceId',
+  auth(),
+  validate(spaceValidation.spaceInfo),
+  spaceRole(spaceRoleEnum.ADMIN),
+  spaceController.updateSpaceInfo
+);
+router.get('/:spaceId', auth(), spaceMember, spaceController.getSpaceInfo);
+router
+  .route('/:spaceId/picture')
+  .post(auth(), spaceRole(spaceRoleEnum.ADMIN), uploadSpacePictureS3.single('file'), spaceController.uploadPicture);
 
 module.exports = router;
 

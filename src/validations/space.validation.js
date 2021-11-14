@@ -9,7 +9,6 @@ const spaceInfo = {
   }),
 };
 
-
 module.exports = {
   spaceInfo,
 };

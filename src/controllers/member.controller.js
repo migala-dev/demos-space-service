@@ -2,29 +2,26 @@ const catchAsync = require('../shared/utils/catchAsync');
 const { memberService } = require('../services');
 
 const sendInvitations = catchAsync(async (req, res) => {
-  const cognitoId = req.user.username;
-  const { spaceId } = req.params;
+  const { user, space } = req;
   const { users } = req.body;
 
-  const result = await memberService.sendInvitations(cognitoId, spaceId, users);
+  const result = await memberService.sendInvitations(user, space, users);
 
   res.send(result);
 });
 
 const acceptInvitation = catchAsync(async (req, res) => {
-  const cognitoId = req.user.username;
-  const { spaceId } = req.params;
+  const { user, space } = req;
 
-  const result = await memberService.acceptSpaceInvitation(cognitoId, spaceId);
+  const result = await memberService.acceptSpaceInvitation(user, space);
 
   res.send(result);
 });
 
 const rejectInvitation = catchAsync(async (req, res) => {
-  const cognitoId = req.user.username;
-  const { spaceId } = req.params;
+  const { user, space } = req;
 
-  const result = await memberService.rejectSpaceInvitation(cognitoId, spaceId);
+  const result = await memberService.rejectSpaceInvitation(user, space);
 
   res.send(result);
 });

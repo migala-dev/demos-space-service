@@ -4,14 +4,14 @@ const catchAsync = require('../shared/utils/catchAsync');
 const { spaceService } = require('../services');
 
 const create = catchAsync(async (req, res) => {
-  const cognitoId = req.user.username;
-  const space = await spaceService.create(cognitoId, req.body);
+  const { user } = req;
+  const space = await spaceService.create(user, req.body);
   res.send(space);
 });
 
 const getAllUserSpaces = catchAsync(async (req, res) => {
-  const cognitoId = req.user.username;
-  const response = await spaceService.getAllUserSpaces(cognitoId);
+  const { user } = req;
+  const response = await spaceService.getAllUserSpaces(user);
   res.send(response);
 });
 
@@ -19,28 +19,28 @@ const uploadPicture = catchAsync(async (req, res) => {
   if (!req.file) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Space image required');
   }
-  const cognitoId = req.user.username;
-  const { spaceId } = req.params;
-  const space = await spaceService.uploadPicture(cognitoId, spaceId, req.file);
-  res.send(space);
+  const { user, space } = req;
+
+  const spaceUpdated = await spaceService.uploadPicture(user, space, req.file);
+
+  res.send(spaceUpdated);
 });
 
 const updateSpaceInfo = catchAsync(async (req, res) => {
-  const cognitoId = req.user.username;
-  const { spaceId } = req.params;
-  const space = await spaceService.updateSpaceInfo(cognitoId, spaceId, req.body);
-  res.send(space);
+  const { space } = req;
+
+  const spaceUpdated = await spaceService.updateSpaceInfo(space, req.body);
+
+  res.send(spaceUpdated);
 });
 
 const getSpaceInfo = catchAsync(async (req, res) => {
-  const cognitoId = req.user.username;
-  const { spaceId } = req.params;
+  const { space, member } = req;
 
-  const result = await spaceService.getSpaceInfo(cognitoId, spaceId);
+  const result = await spaceService.getSpaceInfo(space, member);
 
   res.send(result);
 });
-
 
 module.exports = {
   create,
