@@ -14,6 +14,10 @@ router
   .post(auth(), validate(validation.sendInvitation), spaceRole(spaceRoleEnum.ADMIN), memberController.sendInvitations);
 router.route('/:spaceId/invitation/accept').post(auth(), spaceMember, memberController.acceptInvitation);
 router.route('/:spaceId/invitation/reject').post(auth(), spaceMember, memberController.rejectInvitation);
+router.route('/:spaceId/:memberId').get(auth(), spaceMember, memberController.getMember);
+router
+  .route('/:spaceId/:memberId')
+  .post(auth(), validate(validation.updateMember), spaceRole(spaceRoleEnum.ADMIN), memberController.updateMember);
 
 module.exports = router;
 

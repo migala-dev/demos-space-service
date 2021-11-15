@@ -15,14 +15,14 @@ const sendInvitation = {
   }),
 };
 
-const updateRole = {
+const updateMember = {
   body: Joi.object().keys({
-    userId: Joi.string().required(),
     role: Joi.string().valid(...Object.values(spaceRoleEnum)),
+    name: Joi.string().allow(null, ''),
   }),
 };
 
 module.exports = {
   sendInvitation,
-  updateRole,
+  updateMember,
 };

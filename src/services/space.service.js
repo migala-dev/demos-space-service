@@ -76,7 +76,9 @@ const uploadPicture = async (space, file) => {
 
   await SpaceRepository.updatePictureKey(space.spaceId, pictureKey);
 
-  removeS3File(oldImageKey);
+  if(oldImageKey) {
+    removeS3File(oldImageKey);
+  }
 
   spaceNotification.spaceUpdated(space.spaceId);
 

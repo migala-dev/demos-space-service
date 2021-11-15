@@ -1,7 +1,4 @@
-const httpStatus = require('http-status');
-const ApiError = require('../shared/utils/ApiError');
 const UserRepository = require('../shared/repositories/user.repository');
-const SpaceRepository = require('../shared/repositories/space.repository');
 const MemberRepository = require('../shared/repositories/member.repository');
 const { User } = require('../shared/models');
 const { spaceRoleEnum, invitationStatusEnum } = require('../shared/enums');
@@ -41,7 +38,7 @@ const createInvitation = async (userParams, spaceId, createdBy) => {
     );
 
     memberNotification.newInvitation(spaceId, userId);
-    memberNotification.newMember(spaceId, memberInvitation.memberId);
+    memberNotification.memberUpdated(spaceId, memberInvitation.memberId);
 
     return memberInvitation;
   }
@@ -56,7 +53,7 @@ const createInvitation = async (userParams, spaceId, createdBy) => {
  * @returns {Promise<Member[]>}
  */
 const sendInvitations = async (member, space, users) => {
-  const createdBy = member.spaceId;
+  const createdBy = member.userId;
   const invitations = await Promise.all(
     users.map(async (user) => {
       try {
@@ -122,24 +119,16 @@ const rejectSpaceInvitation = async (member, space) => {
 /**
  * Update member
  * @param {User} currentUser
+ * @param {Space} space
  * @param {String} memberId
- * @param {{ role, name }} params
+ * @param {{ role, name }} memberInfo
  * @returns {Promise<String>}
  */
-const updateMember = async (currentUser, spaceId, memberId, params) => {
-  const space = await SpaceRepository.findById(spaceId);
-  if (!space) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Space not found');
-  }
-
-  const currentUserMembership = await MemberRepository.findByUserIdAndSpaceId(currentUser.userId, spaceId);
-  if (!currentUserMembership || currentUserMembership.role !== spaceRoleEnum.ADMIN) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User is not admin from this space');
-  }
-  const { name, role } = params;
+const updateMember = async (currentUser, space, memberId, memberInfo) => {
+  const { name, role } = memberInfo;
   await MemberRepository.update(memberId, name, role, currentUser.userId);
 
-  memberNotification.memberUpdated(spaceId, memberId);
+  memberNotification.memberUpdated(space.spaceId, memberId);
 
   return true;
 };
@@ -147,11 +136,13 @@ const updateMember = async (currentUser, spaceId, memberId, params) => {
 /**
  * Get member
  * @param {String} memberId
- * @returns {Promise<{ member }>}
+ * @returns {Promise<{ member, user }>}
  */
 const getMember = async (memberId) => {
   const member = await MemberRepository.findById(memberId);
-  return { member };
+  const user = await UserRepository.findById(member.userId);
+
+  return { member, user };
 };
 
 module.exports = {

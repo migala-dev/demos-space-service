@@ -26,8 +26,25 @@ const rejectInvitation = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+const updateMember = catchAsync(async (req, res) => {
+  const { user, space } = req;
+  const { memberId } = req.params;
+  const result = await memberService.updateMember(user, space, memberId, req.body);
+  
+  res.send(result);
+});
+
+const getMember = catchAsync(async (req, res) => {
+  const { memberId } = req.params;
+  const result = await memberService.getMember(memberId);
+
+  res.send(result);
+});
+
 module.exports = {
   sendInvitations,
   acceptInvitation,
   rejectInvitation,
+  updateMember,
+  getMember,
 };

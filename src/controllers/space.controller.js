@@ -19,9 +19,9 @@ const uploadPicture = catchAsync(async (req, res) => {
   if (!req.file) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Space image required');
   }
-  const { user, space } = req;
+  const { space } = req;
 
-  const spaceUpdated = await spaceService.uploadPicture(user, space, req.file);
+  const spaceUpdated = await spaceService.uploadPicture(space, req.file);
 
   res.send(spaceUpdated);
 });
