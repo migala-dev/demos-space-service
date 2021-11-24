@@ -93,7 +93,7 @@ const uploadPicture = async (space, file) => {
  */
 const getSpaceInfo = async (space, member) => {
   if (member.invitationStatus === invitationStatusEnum.SENDED) {
-    await MemberRepository.updateInvitationStatus(member.memberId, invitationStatusEnum.REJECTED);
+    await MemberRepository.updateInvitationStatus(member.memberId, invitationStatusEnum.RECEIVED, member.userId);
     Object.assign(member, { invitationStatus: invitationStatusEnum.RECEIVED });
     memberNotification.memberUpdated(space.spaceId, member.memberId);
   }

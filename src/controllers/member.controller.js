@@ -11,17 +11,17 @@ const sendInvitations = catchAsync(async (req, res) => {
 });
 
 const acceptInvitation = catchAsync(async (req, res) => {
-  const { user, space } = req;
+  const { member, space } = req;
 
-  const result = await memberService.acceptSpaceInvitation(user, space);
+  const result = await memberService.acceptSpaceInvitation(member, space);
 
   res.send(result);
 });
 
 const rejectInvitation = catchAsync(async (req, res) => {
-  const { user, space } = req;
+  const { member, space } = req;
 
-  const result = await memberService.rejectSpaceInvitation(user, space);
+  const result = await memberService.rejectSpaceInvitation(member, space);
 
   res.send(result);
 });
@@ -41,10 +41,28 @@ const getMember = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+const deleteMember = catchAsync(async (req, res) => {
+  const { user, space } = req;
+  const { memberId } = req.params;
+  const result = await memberService.deleteMember(memberId, user, space);
+
+  res.send(result);
+});
+
+const cancelInvitation = catchAsync(async (req, res) => {
+  const { user, space } = req;
+  const { memberId } = req.params;
+  const result = await memberService.cancelInvitation(memberId, user, space);
+
+  res.send(result);
+});
+
 module.exports = {
   sendInvitations,
   acceptInvitation,
   rejectInvitation,
   updateMember,
   getMember,
+  deleteMember,
+  cancelInvitation,
 };
