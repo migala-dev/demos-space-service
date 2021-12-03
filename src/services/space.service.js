@@ -92,13 +92,16 @@ const uploadPicture = async (space, file) => {
  * @returns {Promise<String>}
  */
 const getSpaceInfo = async (space, member) => {
+  let invitedBy = {};
+
   if (member.invitationStatus === invitationStatusEnum.SENDED) {
     await MemberRepository.updateInvitationStatus(member.memberId, invitationStatusEnum.RECEIVED, member.userId);
     Object.assign(member, { invitationStatus: invitationStatusEnum.RECEIVED });
     memberNotification.memberUpdated(space.spaceId, member.memberId);
+    invitedBy = await UserRepository.findById(member.createdBy);
   }
 
-  return { space, member };
+  return { space, member, invitedBy };
 };
 
 module.exports = {

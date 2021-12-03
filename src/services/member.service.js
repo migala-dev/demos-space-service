@@ -128,11 +128,13 @@ const rejectSpaceInvitation = async (member, space) => {
  */
 const updateMember = async (currentUser, space, memberId, memberInfo) => {
   const { name, role } = memberInfo;
-  await MemberRepository.update(memberId, name, role, currentUser.userId);
-
-  memberNotification.memberUpdated(space.spaceId, memberId);
-
-  return true;
+  const member = await MemberRepository.findById(memberId);
+  if (member) {
+    await MemberRepository.update(memberId, name, role, currentUser.userId);
+    memberNotification.memberUpdated(space.spaceId, memberId);
+  } else {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'This user is not a member of this space.');
+  }
 };
 
 /**
@@ -141,7 +143,7 @@ const updateMember = async (currentUser, space, memberId, memberInfo) => {
  * @returns {Promise<{ member, user }>}
  */
 const getMember = async (memberId) => {
-  const member = await MemberRepository.findById(memberId);
+  const member = await MemberRepository.findAnyMemberById(memberId);
   const user = await UserRepository.findById(member.userId);
 
   return { member, user };
