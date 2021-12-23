@@ -9,6 +9,7 @@ const spaceMember = require('../../shared/middlewares/space-member.middleware');
 
 const router = express.Router();
 
+router.delete('/:spaceId', auth(), spaceMember, memberController.leaveSpace);
 router
   .route('/:spaceId/invitation')
   .post(auth(), validate(validation.sendInvitation), spaceRole(spaceRoleEnum.ADMIN), memberController.sendInvitations);

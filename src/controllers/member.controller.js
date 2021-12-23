@@ -57,6 +57,14 @@ const cancelInvitation = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+const leaveSpace = catchAsync(async (req, res) => {
+  const { space, member } = req;
+
+  const result = await memberService.leaveSpace(space, member);
+
+  res.send(result);
+});
+
 module.exports = {
   sendInvitations,
   acceptInvitation,
@@ -65,4 +73,5 @@ module.exports = {
   getMember,
   deleteMember,
   cancelInvitation,
+  leaveSpace,
 };

@@ -191,6 +191,32 @@ const getMember = async (memberId) => {
   return { member };
 };
 
+/**
+ * Leave space
+ * @param {Space} space
+ * @param {Member} member
+ * @returns {Promise<Boolean>}
+ */
+ const leaveSpace = async (space, member) => {
+
+  await MemberRepository.delete(member.memberId, member.userId);
+
+  const members = await MemberRepository.findBySpaceIdAndInvitationStatusAccepted(space.spaceId);
+  if (members.length > 0) {
+
+    if (member.role === spaceRoleEnum.ADMIN && members.every(m => m.role !== spaceRoleEnum.ADMIN)) {
+      const [oldestMember] = members;
+      await MemberRepository.update(oldestMember.memberId, oldestMember.name, spaceRoleEnum.ADMIN, member.userId);
+      memberNotification.memberUpdated(space.spaceId, oldestMember.memberId);
+    }
+
+    memberNotification.memberUpdated(space.spaceId, member.memberId);
+  } 
+
+  return true;
+};
+
+
 module.exports = {
   sendInvitations,
   acceptSpaceInvitation,
@@ -198,5 +224,6 @@ module.exports = {
   updateMember,
   getMember,
   deleteMember,
-  cancelInvitation
+  cancelInvitation,
+  leaveSpace,
 };
