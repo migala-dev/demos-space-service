@@ -71,6 +71,13 @@ const sendInvitations = async (member, space, users) => {
   return invitations.filter((inv) => !!inv);
 };
 
+const isInvitationExpired = (member) => {
+  const today = new Date();
+  const invitationExpiredDate = member.expiredAt;
+
+  return today > invitationExpiredDate;
+};
+
 /**
  * Accept Invitation
  * @param {Member} member
@@ -78,6 +85,22 @@ const sendInvitations = async (member, space, users) => {
  * @returns {Promise<{ space, members, users }>}
  */
 const acceptSpaceInvitation = async (currentMember, space) => {
+  if (
+    currentMember.invitationStatus !== invitationStatusEnum.RECEIVED &&
+    currentMember.invitationStatus !== invitationStatusEnum.SENDED
+  ) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'This invitation is not in a valid status.');
+  }
+  if (isInvitationExpired(currentMember)) {
+    await MemberRepository.updateInvitationStatus(
+      currentMember.memberId,
+      invitationStatusEnum.EXPIRED,
+      currentMember.userId
+    );
+    memberNotification.memberUpdated(space.spaceId, currentMember.memberId);
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invitation expired.');
+  }
+
   let members = await MemberRepository.findBySpaceIdAndInvitationStatusAccepted(space.spaceId);
   members = members.filter((m) => m.userId !== currentMember.userId);
 
@@ -93,11 +116,9 @@ const acceptSpaceInvitation = async (currentMember, space) => {
     })
   );
 
-  if (currentMember.invitationStatus === invitationStatusEnum.RECEIVED) {
-    await MemberRepository.updateInvitationStatus(currentMember.memberId, invitationStatusEnum.ACCEPTED, currentMember.userId);
-    Object.assign(currentMember, { invitationStatus: invitationStatusEnum.ACCEPTED });
-    memberNotification.memberUpdated(space.spaceId, currentMember.memberId);
-  }
+  await MemberRepository.updateInvitationStatus(currentMember.memberId, invitationStatusEnum.ACCEPTED, currentMember.userId);
+  Object.assign(currentMember, { invitationStatus: invitationStatusEnum.ACCEPTED });
+  memberNotification.memberUpdated(space.spaceId, currentMember.memberId);
 
   return { space, members: [...members, currentMember], users };
 };
@@ -156,7 +177,7 @@ const getMember = async (memberId) => {
  * @param {Space} space
  * @returns {Promise<{ member }>}
  */
- const deleteMember = async (memberId, currentUser, space) => {
+const deleteMember = async (memberId, currentUser, space) => {
   const member = await MemberRepository.findById(memberId);
 
   if (member && member.invitationStatus === invitationStatusEnum.ACCEPTED) {
@@ -177,7 +198,7 @@ const getMember = async (memberId) => {
  * @param {Space} space
  * @returns {Promise<{ member }>}
  */
- const cancelInvitation = async (memberId, currentUser, space) => {
+const cancelInvitation = async (memberId, currentUser, space) => {
   const member = await MemberRepository.findById(memberId);
 
   if (member.invitationStatus === invitationStatusEnum.SENDED || member.invitationStatus === invitationStatusEnum.RECEIVED) {
@@ -197,25 +218,22 @@ const getMember = async (memberId) => {
  * @param {Member} member
  * @returns {Promise<Boolean>}
  */
- const leaveSpace = async (space, member) => {
-
+const leaveSpace = async (space, member) => {
   await MemberRepository.delete(member.memberId, member.userId);
 
   const members = await MemberRepository.findBySpaceIdAndInvitationStatusAccepted(space.spaceId);
   if (members.length > 0) {
-
-    if (member.role === spaceRoleEnum.ADMIN && members.every(m => m.role !== spaceRoleEnum.ADMIN)) {
+    if (member.role === spaceRoleEnum.ADMIN && members.every((m) => m.role !== spaceRoleEnum.ADMIN)) {
       const [oldestMember] = members;
       await MemberRepository.update(oldestMember.memberId, oldestMember.name, spaceRoleEnum.ADMIN, member.userId);
       memberNotification.memberUpdated(space.spaceId, oldestMember.memberId);
     }
 
     memberNotification.memberUpdated(space.spaceId, member.memberId);
-  } 
+  }
 
   return true;
 };
-
 
 module.exports = {
   sendInvitations,
