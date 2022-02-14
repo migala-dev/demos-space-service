@@ -27,9 +27,9 @@ const uploadPicture = catchAsync(async (req, res) => {
 });
 
 const updateSpaceInfo = catchAsync(async (req, res) => {
-  const { space } = req;
+  const { space, user } = req;
 
-  const spaceUpdated = await spaceService.updateSpaceInfo(space, req.body);
+  const spaceUpdated = await spaceService.updateSpaceInfo(space, req.body, user);
 
   res.send(spaceUpdated);
 });

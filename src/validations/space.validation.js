@@ -9,6 +9,17 @@ const spaceInfo = {
   }),
 };
 
+const updateSpaceInfo = {
+  body: Joi.object().keys({
+    name: Joi.string().allow(null),
+    description: Joi.string().allow(null, ''),
+    approvalPercentage: Joi.number().greater(50).less(101).allow(null),
+    participationPercentage: Joi.number().greater(50).less(101).allow(null),
+  }),
+};
+
+
 module.exports = {
   spaceInfo,
+  updateSpaceInfo,
 };

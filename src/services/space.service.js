@@ -44,9 +44,11 @@ const getAllUserSpaces = async (currentUser) => {
 /**
  * Update space info
  * @param {Space} space
+ * @param {Space} spaceInfo
+ * @param {User} currentUser
  * @returns {Promise<String>}
  */
-const updateSpaceInfo = async (space, spaceInfo) => {
+const updateSpaceInfo = async (space, spaceInfo, currentUser) => {
   const { name, description, approvalPercentage, participationPercentage } = spaceInfo;
 
   await SpaceRepository.updateNameAndDescriptionAndPercentages(
@@ -58,7 +60,7 @@ const updateSpaceInfo = async (space, spaceInfo) => {
   );
   const spaceUpdated = await SpaceRepository.findById(space.spaceId);
 
-  spaceNotification.spaceUpdated(space.spaceId);
+  spaceNotification.spaceUpdated(space.spaceId, currentUser.userId);
 
   return spaceUpdated;
 };

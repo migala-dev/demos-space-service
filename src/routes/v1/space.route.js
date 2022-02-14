@@ -15,7 +15,7 @@ router.get('/', auth(), spaceController.getAllUserSpaces);
 router.post(
   '/:spaceId',
   auth(),
-  validate(spaceValidation.spaceInfo),
+  validate(spaceValidation.updateSpaceInfo),
   spaceRole(spaceRoleEnum.ADMIN),
   spaceController.updateSpaceInfo
 );
