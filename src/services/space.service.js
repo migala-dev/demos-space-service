@@ -18,12 +18,23 @@
 */
 
 const UserRepository = require('../shared/repositories/user.repository');
+const ProposalRepository = require('../shared/repositories/proposal.repository');
+const ProposalParticipationRepository = require('../shared/repositories/proposal-participation.repository');
+const ProposalVoteRepository = require('../shared/repositories/proposal-vote.repository');
+const ManifestoRepository = require('../shared/repositories/manifesto.repository');
+const ManifestoOptionRepository = require('../shared/repositories/manifesto-option.repository');
+const ManifestoCommentRepository = require('../shared/repositories/manifesto-comment.repository');
+const ManifestoCommentVoteRepository = require('../shared/repositories/manifesto-comment-vote.repository');
 const SpaceRepository = require('../shared/repositories/space.repository');
 const MemberRepository = require('../shared/repositories/member.repository');
-const { spaceRoleEnum, invitationStatusEnum } = require('../shared/enums');
+const { spaceRoleEnum, invitationStatusEnum, proposalStatusEnum } = require('../shared/enums');
 const removeS3File = require('../shared/utils/removeS3File');
 const memberNotification = require('../shared/notifications/members.notification');
 const spaceNotification = require('../shared/notifications/space.notification');
+const ProposalParticipation = require('../shared/models/proposal-participation.model');
+const Manifesto = require('../shared/models/manifesto.model');
+const ManifestoOption = require('../shared/models/manifesto-option.model');
+const ProposalVote = require('../shared/models/proposal-vote.model');
 
 /**
  * Create space
@@ -45,19 +56,67 @@ const create = async (currentUser, newSpace) => {
   return { space, member };
 };
 
+/* 
+- manifesto_comments
+- manifesto_comments_votes
+*/
 /**
  * Get all user's spaces
  * @param {User} currentUser
- * @returns {Promise<User>}
+ * @returns {Promise<{
+ *      users: User[],
+ *      spaces: Space[],
+ *      members: Member[],
+ *      proposals: Proposal[],
+ *      proposalParticipation: ProposalParticipation[],
+ *      proposalVotes: ProposalVote[],
+ *      manifestos: Manifesto[],
+ *      manifesto_options: ManifestoOption[],
+ *      manifesto_comments: ManifestoComment[],
+ *      manifesto_comment_votes: ManifestoCommentVote[],
+ *  }>}
  */
 const getAllUserSpaces = async (currentUser) => {
   const spaces = await SpaceRepository.findAllByUserId(currentUser.userId);
   const spaceIds = spaces.map((s) => s.spaceId);
+
   const members = await MemberRepository.findAllBySpaceIds(spaceIds);
+
   const userIds = members.map((u) => u.userId);
   const users = await UserRepository.findAllByIds(userIds);
 
-  return { spaces, members, users };
+  const proposals = await ProposalRepository.findAllBySpaceIds(spaceIds);
+
+  const openOrClosedProposalIds = proposals
+    .filter((p) => p.status === proposalStatusEnum.CLOSED || p.status === proposalStatusEnum.OPEN)
+    .map((p) => p.proposalId);
+  const proposalParticipations = await ProposalParticipationRepository.findAllByProposalIds(openOrClosedProposalIds);
+
+  const closedProposalIds = proposals.filter((p) => p.status === proposalStatusEnum.CLOSED).map((p) => p.proposalId);
+  const proposalVotes = await ProposalVoteRepository.findAllByProposalIds(closedProposalIds);
+
+  const manifestoIds = proposals.map((p) => p.manifestoId);
+  const manifestos = await ManifestoRepository.findAllByManifestoIds(manifestoIds);
+
+  const manifestoOptions = await ManifestoOptionRepository.findAllByManifestoIds(manifestoIds);
+
+  const manifestoComments = await ManifestoCommentRepository.findAllByManifestoIds(manifestoIds);
+
+  const manifestoCommentIds = manifestoComments.map(c => c.manifestoCommentId);
+  const manifestoCommentVotes = await ManifestoCommentVoteRepository.findAllByManifestoCommentIds(manifestoCommentIds);
+
+  return {
+    spaces,
+    members,
+    users,
+    proposals,
+    proposalParticipations,
+    proposalVotes,
+    manifestos,
+    manifestoOptions,
+    manifestoComments,
+    manifestoCommentVotes,
+  };
 };
 
 /**
@@ -97,7 +156,7 @@ const uploadPicture = async (space, file) => {
 
   await SpaceRepository.updatePictureKey(space.spaceId, pictureKey);
 
-  if(oldImageKey) {
+  if (oldImageKey) {
     removeS3File(oldImageKey);
   }
 
