@@ -179,6 +179,7 @@ const getSpaceInfo = async (space, member) => {
     Object.assign(member, { invitationStatus: invitationStatusEnum.RECEIVED });
     memberNotification.memberUpdated(space.spaceId, member.memberId);
     invitedBy = await UserRepository.findById(member.createdBy);
+    delete invitedBy.phoneNumber;
   }
 
   return { space, member, invitedBy };

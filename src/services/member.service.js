@@ -127,6 +127,7 @@ const acceptSpaceInvitation = async (currentMember, space) => {
     members.map(async (member) => {
       try {
         const user = await UserRepository.findById(member.userId);
+        delete user.phoneNumber;
         return user;
       } catch (err) {
         logger.error(err);
@@ -185,6 +186,7 @@ const updateMember = async (currentUser, space, memberId, memberInfo) => {
 const getMember = async (memberId) => {
   const member = await MemberRepository.findAnyMemberById(memberId);
   const user = await UserRepository.findById(member.userId);
+  delete user.phoneNumber;
 
   return { member, user };
 };
