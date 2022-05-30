@@ -36,6 +36,7 @@ router.route('/:spaceId/invitation/accept').post(auth(), spaceMember, memberCont
 router.route('/:spaceId/invitation/reject').post(auth(), spaceMember, memberController.rejectInvitation);
 router.route('/:spaceId/invitation/:memberId').delete(auth(), spaceRole(spaceRoleEnum.ADMIN), memberController.cancelInvitation);
 router.route('/:spaceId/:memberId').get(auth(), spaceMember, memberController.getMember);
+router.route('/:spaceId/members/phones').get(auth(), spaceRole(spaceRoleEnum.ADMIN), memberController.getMembersPhoneNumber);
 router
   .route('/:spaceId/:memberId')
   .post(auth(), validate(validation.updateMember), spaceRole(spaceRoleEnum.ADMIN), memberController.updateMember);

@@ -179,6 +179,17 @@ const updateMember = async (currentUser, space, memberId, memberInfo) => {
 };
 
 /**
+ * Get all members phoneNumbers
+ * @param {Space} space
+ * @returns {Promise<{ memberPhoneNumbers: { memberId: string, phoneNumber: string }[] }>}
+ */
+const getMembersPhoneNumber = async (space) => {
+  const memberPhoneNumbers = await MemberRepository.findMemberPhoneNumbers(space.spaceId);
+
+  return { memberPhoneNumbers };
+};
+
+/**
  * Get member
  * @param {String} memberId
  * @returns {Promise<{ member, user }>}
@@ -261,6 +272,7 @@ module.exports = {
   acceptSpaceInvitation,
   rejectSpaceInvitation,
   updateMember,
+  getMembersPhoneNumber,
   getMember,
   deleteMember,
   cancelInvitation,

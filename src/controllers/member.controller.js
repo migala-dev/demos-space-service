@@ -53,6 +53,13 @@ const updateMember = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+const getMembersPhoneNumber = catchAsync(async (req, res) => {
+  const { space } = req;
+  const result = await memberService.getMembersPhoneNumber(space);
+  
+  res.send(result);
+});
+
 const getMember = catchAsync(async (req, res) => {
   const { memberId } = req.params;
   const result = await memberService.getMember(memberId);
@@ -89,6 +96,7 @@ module.exports = {
   acceptInvitation,
   rejectInvitation,
   updateMember,
+  getMembersPhoneNumber,
   getMember,
   deleteMember,
   cancelInvitation,
