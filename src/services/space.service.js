@@ -56,10 +56,6 @@ const create = async (currentUser, newSpace) => {
   return { space, member };
 };
 
-/* 
-- manifesto_comments
-- manifesto_comments_votes
-*/
 /**
  * Get all user's spaces
  * @param {User} currentUser
@@ -80,6 +76,48 @@ const getAllUserSpaces = async (currentUser) => {
   const spaces = await SpaceRepository.findAllByUserId(currentUser.userId);
   const spaceIds = spaces.map((s) => s.spaceId);
 
+  const {
+    members,
+    users,
+    proposals,
+    proposalParticipations,
+    proposalVotes,
+    manifestos,
+    manifestoOptions,
+    manifestoComments,
+    manifestoCommentVotes,
+  } = await getSpacesData(spaceIds);
+
+  return {
+    spaces,
+    members,
+    users,
+    proposals,
+    proposalParticipations,
+    proposalVotes,
+    manifestos,
+    manifestoOptions,
+    manifestoComments,
+    manifestoCommentVotes,
+  };
+};
+
+/**
+ * Get spaces data 
+ * @param {string[]} spaceIds
+ * @returns {Promise<{
+ *      users: User[],
+ *      members: Member[],
+ *      proposals: Proposal[],
+ *      proposalParticipation: ProposalParticipation[],
+ *      proposalVotes: ProposalVote[],
+ *      manifestos: Manifesto[],
+ *      manifesto_options: ManifestoOption[],
+ *      manifesto_comments: ManifestoComment[],
+ *      manifesto_comment_votes: ManifestoCommentVote[],
+ *  }>}
+ */
+const getSpacesData = async (spaceIds) => {
   const members = await MemberRepository.findAllBySpaceIds(spaceIds);
 
   const userIds = members.map((u) => u.userId);
@@ -102,11 +140,10 @@ const getAllUserSpaces = async (currentUser) => {
 
   const manifestoComments = await ManifestoCommentRepository.findAllByManifestoIds(manifestoIds);
 
-  const manifestoCommentIds = manifestoComments.map(c => c.manifestoCommentId);
+  const manifestoCommentIds = manifestoComments.map((c) => c.manifestoCommentId);
   const manifestoCommentVotes = await ManifestoCommentVoteRepository.findAllByManifestoCommentIds(manifestoCommentIds);
 
   return {
-    spaces,
     members,
     users,
     proposals,
@@ -191,4 +228,5 @@ module.exports = {
   uploadPicture,
   getSpaceInfo,
   updateSpaceInfo,
+  getSpacesData,
 };

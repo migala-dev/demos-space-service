@@ -25,6 +25,7 @@ const { User } = require('../shared/models');
 const { spaceRoleEnum, invitationStatusEnum } = require('../shared/enums');
 const logger = require('../shared/config/logger');
 const memberNotification = require('../shared/notifications/members.notification');
+const { getSpacesData } = require('./space.service');
 
 const createUser = (phoneNumber) => {
   const user = new User();
@@ -101,7 +102,18 @@ const isInvitationExpired = (member) => {
  * Accept Invitation
  * @param {Member} member
  * @param {Space} space
- * @returns {Promise<{ space, members, users }>}
+ * @returns {Promise<{
+ *      users: User[],
+ *      spaces: Space[],
+ *      members: Member[],
+ *      proposals: Proposal[],
+ *      proposalParticipation: ProposalParticipation[],
+ *      proposalVotes: ProposalVote[],
+ *      manifestos: Manifesto[],
+ *      manifesto_options: ManifestoOption[],
+ *      manifesto_comments: ManifestoComment[],
+ *      manifesto_comment_votes: ManifestoCommentVote[],
+ *  }>}
  */
 const acceptSpaceInvitation = async (currentMember, space) => {
   if (
@@ -120,27 +132,35 @@ const acceptSpaceInvitation = async (currentMember, space) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invitation expired.');
   }
 
-  let members = await MemberRepository.findBySpaceIdAndInvitationStatusAccepted(space.spaceId);
+  let {
+    members,
+    users,
+    proposals,
+    proposalParticipations,
+    proposalVotes,
+    manifestos,
+    manifestoOptions,
+    manifestoComments,
+    manifestoCommentVotes,
+  } = await getSpacesData([space.spaceId]);
   members = members.filter((m) => m.userId !== currentMember.userId);
-
-  const users = await Promise.all(
-    members.map(async (member) => {
-      try {
-        const user = await UserRepository.findById(member.userId);
-        delete user.phoneNumber;
-        return user;
-      } catch (err) {
-        logger.error(err);
-        return null;
-      }
-    })
-  );
 
   await MemberRepository.updateInvitationStatus(currentMember.memberId, invitationStatusEnum.ACCEPTED, currentMember.userId);
   Object.assign(currentMember, { invitationStatus: invitationStatusEnum.ACCEPTED });
   memberNotification.memberUpdated(space.spaceId, currentMember.memberId);
 
-  return { space, members: [...members, currentMember], users };
+  return {
+    space,
+    members: [...members, currentMember],
+    users,
+    proposals,
+    proposalParticipations,
+    proposalVotes,
+    manifestos,
+    manifestoOptions,
+    manifestoComments,
+    manifestoCommentVotes,
+  };
 };
 
 /**
