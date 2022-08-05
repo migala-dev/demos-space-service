@@ -294,7 +294,7 @@ const deleteInvitations = async space => {
     space.spaceId
   );
 
-  await Promise.all(invitedMembers.map(member => 
+  return Promise.all(invitedMembers.map(member => 
     MemberRepository.delete(member.memberId, member.userId)
   ));
 };
