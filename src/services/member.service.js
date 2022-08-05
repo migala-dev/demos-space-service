@@ -172,7 +172,8 @@ const acceptSpaceInvitation = async (currentMember, space) => {
 const rejectSpaceInvitation = async (member, space) => {
   if (member.invitationStatus === invitationStatusEnum.RECEIVED) {
     await MemberRepository.updateInvitationStatus(member.memberId, invitationStatusEnum.REJECTED, member.userId);
-    Object.assign(member, { invitationStatus: invitationStatusEnum.REJECTED });
+    await MemberRepository.delete(member.memberId, member.userId);
+    Object.assign(member, { invitationStatus: invitationStatusEnum.REJECTED, deleted: true });
     memberNotification.memberUpdated(space.spaceId, member.memberId);
   }
 
@@ -255,7 +256,8 @@ const cancelInvitation = async (memberId, currentUser, space) => {
 
   if (member.invitationStatus === invitationStatusEnum.SENDED || member.invitationStatus === invitationStatusEnum.RECEIVED) {
     await MemberRepository.updateInvitationStatus(memberId, invitationStatusEnum.CANCELED, currentUser.userId);
-    Object.assign(member, { invitationStatus: invitationStatusEnum.CANCELED });
+    await MemberRepository.delete(memberId, currentUser.userId)
+    Object.assign(member, { invitationStatus: invitationStatusEnum.CANCELED, deleted: true });
     memberNotification.memberUpdated(space.spaceId, memberId);
     memberNotification.invitationCanceled(space.spaceId, member.userId, memberId);
   } else {
