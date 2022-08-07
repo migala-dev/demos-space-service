@@ -282,9 +282,21 @@ const leaveSpace = async (space, member) => {
     }
 
     memberNotification.memberUpdated(space.spaceId, member.memberId);
+  } else {
+    await deleteInvitations(space);
   }
 
   return true;
+};
+
+const deleteInvitations = async space => {
+  const invitedMembers = await MemberRepository.findBySpaceIdAndInvitationStatusSendedOrReceived(
+    space.spaceId
+  );
+
+  return Promise.all(invitedMembers.map(member => 
+    MemberRepository.delete(member.memberId, member.userId)
+  ));
 };
 
 module.exports = {
